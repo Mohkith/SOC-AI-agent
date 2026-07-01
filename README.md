@@ -11,13 +11,6 @@ AI SOC Agent is a FastAPI-based security triage service that receives Splunk and
 - LLM-based triage verdict generation
 - SQLite-backed caching for enriched IPs
 
-## Requirements
-- Python 3.10 or newer
-- FastAPI
-- Uvicorn
-- LangGraph
-- Access to the required API keys
-
 ## Setup
 1. Clone the repository.
 ```bash
@@ -61,10 +54,6 @@ copy .env.example .env
 ```bash
 uvicorn main:app --reload --port 5000
 ```
-
-## API Endpoints
-- `POST /webhook/splunk`
-- `POST /webhook/sentinel`
 
 ## Example Request
 ```bash

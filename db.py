@@ -34,11 +34,9 @@ def get_cached(ip: str) -> EnrichedIOC | None:
 
 
 def save_ioc(ioc: EnrichedIOC) -> None:
-    with Session(engine, expire_on_commit=False) as session:
+    with Session(engine) as session:
         session.add(ioc)
         session.commit()
-        session.refresh(ioc)
-
 
 async def enrich_ip_all(ip: str) -> EnrichedIOC:
     """The single entry point everything else calls: cache check, then
