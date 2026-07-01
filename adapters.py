@@ -1,0 +1,103 @@
+"""
+Adapters — one function per SIEM source. Each knows how to dig through
+that source's specific (and sometimes deeply nested) raw JSON shape and
+produce a clean, normalized Alert object.
+
+This is the ONLY place that should know about Splunk's or Sentinel's
+raw field names. Everything downstream only ever talks to Alert.
+"""
+
+from schemas import Alert
+
+
+def from_splunk(raw: dict) -> Alert:
+    """
+    Converts a raw Splunk webhook payload into an Alert.
+
+    Real Splunk webhook shape:
+        raw["body"]["search_name"]   -> rule_name
+        raw["body"]["sid"]           -> alert_id
+        raw["body"]["result"]        -> dict of event fields (varies a lot
+                                         by alert type — brute force alerts
+                                         have src_ip/count, endpoint alerts
+                                         have ComputerName/EventCode, etc.)
+
+    Uses .get() everywhere except the one field we genuinely require
+    (rule_name) so a missing optional field never crashes the adapter.
+    """
+    body = raw[0].get("body", {})
+    result = body.get("result", {})
+
+    src_ip = (
+        result.get("Source_Network_Address")
+        or result.get("src_ip")
+        or result.get("Source_Address")
+        or None
+    )
+    # Splunk sometimes sends "" for empty fields instead of omitting the key
+    if src_ip == "":
+        src_ip = None
+
+    event_count = result.get("count")
+    try:
+        event_count = int(event_count) if event_count not in (None, "") else None
+    except (ValueError, TypeError):
+        event_count = None
+
+    dest_port = result.get("dest_port") or result.get("Destination_Port")
+    try:
+        dest_port = int(dest_port) if dest_port not in (None, "") else None
+    except (ValueError, TypeError):
+        dest_port = None
+
+    return Alert(
+        alert_id=body.get("sid", "unknown-splunk-alert"),
+        rule_name=body.get("search_name", "Unknown Splunk Rule"),
+        siem_source="splunk",
+        severity="medium",  # raw Splunk webhook action doesn't send severity by default
+        src_ip=src_ip,
+        dest_ip=result.get("dest_ip") or result.get("Destination_Address"),
+        dest_port=dest_port,
+        username=result.get("Account_Name") or result.get("user"),
+        hostname=result.get("ComputerName"),
+        event_code=result.get("EventCode"),
+        event_count=event_count,
+        description=body.get("search_name"),
+        log_snippet=result.get("_raw"),
+        message= result.get("Message"),
+        raw_details=result,  # keep everything, untouched, for the LLM
+    )
+
+
+def from_sentinel(raw: dict) -> Alert:
+    """
+    Converts a raw Sentinel incident payload into an Alert.
+
+    Sentinel buries IPs/usernames inside an `entities` list instead of
+    flat fields, so we loop through it to pull out what we need.
+    """
+    src_ip = None
+    username = None
+    hostname = None
+
+    for entity in raw.get("entities", []):
+        entity_type = entity.get("type", "").lower()
+        if entity_type == "ip" and src_ip is None:
+            src_ip = entity.get("address")
+        elif entity_type == "account" and username is None:
+            username = entity.get("name")
+        elif entity_type == "host" and hostname is None:
+            hostname = entity.get("hostName")
+
+    return Alert(
+        alert_id=raw.get("id", "unknown-sentinel-alert"),
+        rule_name=raw.get("title", "Unknown Sentinel Rule"),
+        siem_source="sentinel",
+        severity=str(raw.get("severity", "medium")).lower(),
+        src_ip=src_ip,
+        username=username,
+        hostname=hostname,
+        description=raw.get("description"),
+        message=raw.get("message"),
+        raw_details=raw,  # keep everything, untouched, for the LLM
+    )
