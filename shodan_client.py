@@ -2,9 +2,6 @@
 Shodan client — fetches exposure data (open ports, services, known CVEs)
 for an IP. Same async/httpx pattern as enrich_abuseipdb / enrich_virustotal
 in enrichment.py.
-
-Only called when decisions.should_query_shodan() returns True — i.e.
-reputation data from AbuseIPDB/VirusTotal was ambiguous.
 """
 
 import os
@@ -52,9 +49,6 @@ async def enrich_shodan(ip_address: str) -> ShodanResponse | None:
             hostnames=raw.get("hostnames", []),
             org=raw.get("org"),
             os=raw.get("os"),
-            vulns=list(raw.get("vulns", [])),
-            # keep only product/version/port per service — drop full banners
-            # to avoid bloating the prompt with raw HTTP/SSH headers
             data=[
                 {
                     "port": entry.get("port"),

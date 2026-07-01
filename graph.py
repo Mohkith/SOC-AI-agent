@@ -2,11 +2,6 @@
 LangGraph wiring. This is the single place the pipeline's flow is
 defined — every node below wraps a function you already wrote in
 another file. None of the actual logic lives here, only the wiring.
-
-Flow:
-  extract_iocs -> enrich -> [should_query_shodan?]
-                              yes -> query_shodan -> build_prompt -> triage -> END
-                              no  -> build_prompt -> triage -> END
 """
 
 from typing import TypedDict
@@ -15,7 +10,6 @@ from langgraph.graph import END, StateGraph
 
 from decisions import should_query_shodan
 from db import enrich_ip_all
-from enrichment import build_enriched_ioc  # noqa: F401  (re-exported for convenience)
 from ip_utils import extract_iocs, is_internal_ip
 from llm_client import triage_alert
 from prompts import build_prompt

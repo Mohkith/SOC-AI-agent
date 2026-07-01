@@ -33,10 +33,7 @@ def _ollama_headers() -> dict[str, str]:
 
 
 def _extract_json(text: str) -> str:
-    """
-    Claude sometimes wraps JSON in ```json fences even when told not to.
-    Strip those before parsing.
-    """
+    
     text = text.strip()
     if text.startswith("```"):
         text = text.split("```")[1]

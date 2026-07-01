@@ -88,8 +88,6 @@ def build_prompt(
         parts.append(f"Hostnames: {shodan_data.hostnames or 'none'}")
         parts.append(f"Organization: {shodan_data.org or 'unknown'}")
         parts.append(f"Operating system: {shodan_data.os or 'unknown'}")
-        if shodan_data.vulns:
-            parts.append(f"Known CVEs on this host: {shodan_data.vulns}")
         if shodan_data.data:
             parts.append(f"Services detected: {shodan_data.data}")
 

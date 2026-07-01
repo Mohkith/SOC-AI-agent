@@ -1,7 +1,6 @@
 """
 Threat intel enrichment — AbuseIPDB + VirusTotal called in parallel,
-merged into one EnrichedIOC. This is your existing Phase 1/2 code,
-moved into its own module.
+merged into one EnrichedIOC.
 """
 
 import os

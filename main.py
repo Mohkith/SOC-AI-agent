@@ -1,7 +1,6 @@
 """
-FastAPI webhook server. Stays thin — receives the raw payload, converts
+FastAPI webhook server.Receives the raw payload, converts
 it to an Alert, hands off to the LangGraph pipeline, returns the result.
-All branching (internal IP skip, Shodan decision) lives inside graph.py.
 
 Run with: uvicorn main:app --reload --port 5000
 Test with:
@@ -80,7 +79,6 @@ async def process_alert(alert: Alert) -> dict:
             "hostnames": shodan_data.hostnames,"\n"
             "org": shodan_data.org,"\n"
             "os": shodan_data.os,"\n"
-            "vulns": shodan_data.vulns,"\n"
             "data": shodan_data.data
         }if shodan_data else print(None),
     }

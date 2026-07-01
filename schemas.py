@@ -11,16 +11,7 @@ from pydantic import BaseModel, Field, computed_field
 from sqlmodel import SQLModel, Field as SQLField
 
 
-class Alert(BaseModel):
-    """
-    Normalized alert shape. Every SIEM source (Splunk, Sentinel) gets
-    converted into this same shape via an adapter function.
-
-    Only alert_id and rule_name are required — every other field is
-    optional because different alert types populate different subsets.
-    e.g. a brute-force alert has src_ip + event_count, a log-clearing
-    alert has hostname + event_code but no src_ip at all.
-    """
+class Alert(BaseModel): 
 
     alert_id: str
     rule_name: str
@@ -74,21 +65,16 @@ class VTresponse(BaseModel):
 
 
 class ShodanResponse(BaseModel):
-    """
-    Exposure data — what's actually running on this IP right now,
-    as opposed to reputation history from AbuseIPDB/VirusTotal.
-    """
+    
     ip_str: str
     ports: list[int] = []
     hostnames: list[str] = []
     org: str | None = None
     os: str | None = None
-    vulns: list[str] = []          # known CVEs Shodan detected on this host
     data: list[dict] = []          # raw per-service banners (kept minimal in prompt)
 
 
 class TriageResult(BaseModel):
-    """The LLM's structured verdict — validated the moment it comes back."""
 
     verdict: Literal["TRUE_POSITIVE", "FALSE_POSITIVE", "NEEDS_INVESTIGATION"]
     confidence: int
@@ -100,7 +86,6 @@ class TriageResult(BaseModel):
 
 
 class EnrichedIOC(SQLModel, table=True):
-    """Unified threat intel result, cached in SQLite."""
 
     __tablename__ = "iocs_cached"
 

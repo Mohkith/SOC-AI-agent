@@ -17,7 +17,7 @@ def create_db_and_tables() -> None:
 
 
 def get_cached(ip: str) -> EnrichedIOC | None:
-    with Session(engine) as session:
+    with Session(engine, expire_on_commit=False) as session:
         statement = select(EnrichedIOC).where(EnrichedIOC.ipAddress == ip)
         result = session.exec(statement).first()
 
@@ -34,9 +34,10 @@ def get_cached(ip: str) -> EnrichedIOC | None:
 
 
 def save_ioc(ioc: EnrichedIOC) -> None:
-    with Session(engine) as session:
+    with Session(engine, expire_on_commit=False) as session:
         session.add(ioc)
         session.commit()
+        session.refresh(ioc)
 
 
 async def enrich_ip_all(ip: str) -> EnrichedIOC:
