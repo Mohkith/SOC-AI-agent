@@ -10,6 +10,7 @@ AI SOC Agent is a FastAPI-based security triage service that receives Splunk and
 - Optional Shodan lookup for exposed hosts
 - LLM-based triage verdict generation
 - SQLite-backed caching for enriched IPs
+- Slack webhook delivery for enriched LLM triage alerts
 
 ## Setup
 1. Clone the repository.
@@ -49,6 +50,9 @@ copy .env.example .env
 - `VT_API_KEY` - VirusTotal API key
 - `ANTHROPIC_API_KEY` - Anthropic API key
 - `OLLAMA_API_KEY` - Ollama API key
+- `SLACK_WEBHOOK_URL` - Slack incoming webhook URL for triage notifications
+
+When `SLACK_WEBHOOK_URL` is set, each processed alert is posted to Slack with the verdict, confidence, priority, summary, and any enrichment context.
 
 ## Run the App
 ```bash

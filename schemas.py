@@ -36,6 +36,7 @@ class Alert(BaseModel):
     raw_details: dict = Field(default_factory=dict)
 
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    results_link: str | None = None
 
 
 class ExtractedIOCs(BaseModel):

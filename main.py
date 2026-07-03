@@ -13,11 +13,15 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import ValidationError
+from dotenv import load_dotenv
 
 from adapters import from_sentinel, from_splunk
 from db import create_db_and_tables
 from graph import soc_graph
 from schemas import Alert
+from slack import send_slack_alert
+
+load_dotenv()
 
 
 @asynccontextmanager
@@ -58,31 +62,34 @@ async def process_alert(alert: Alert) -> dict:
     result = final_state["result"]
     enriched = final_state.get("enriched")
     shodan_data = final_state.get("shodan_data")
-    return {
+
+    response = {
         "alert_id": alert.alert_id,
         "rule_name": alert.rule_name,
         **result.model_dump(),
         "enrichment": {
-            "ip": enriched.ipAddress,"\n"
-            "abuse_score": enriched.abuse_score,"\n"
-            "abuse_total_reports": enriched.abuse_total_reports,"\n"
-            "country": enriched.country,"\n"
-            "isp": enriched.isp,"\n"
-            "vt_malicious": enriched.vt_malicious,"\n"
-            "vt_suspicious": enriched.vt_suspicious,"\n"
-            "vt_harmless": enriched.vt_harmless,"\n"
-            "combined_score": enriched.combined_score,"\n"
+            "ip": enriched.ipAddress,
+            "abuse_score": enriched.abuse_score,
+            "abuse_total_reports": enriched.abuse_total_reports,
+            "country": enriched.country,
+            "isp": enriched.isp,
+            "vt_malicious": enriched.vt_malicious,
+            "vt_suspicious": enriched.vt_suspicious,
+            "vt_harmless": enriched.vt_harmless,
+            "combined_score": enriched.combined_score,
             "severity": enriched.severity,
         } if enriched else None,
-        "shodan_data":{
-            "ports": shodan_data.ports,"\n"
-            "hostnames": shodan_data.hostnames,"\n"
-            "org": shodan_data.org,"\n"
-            "os": shodan_data.os,"\n"
-            "data": shodan_data.data
-        }if shodan_data else print(None),
+        "shodan_data": {
+            "ports": shodan_data.ports,
+            "hostnames": shodan_data.hostnames,
+            "org": shodan_data.org,
+            "os": shodan_data.os,
+            "data": shodan_data.data,
+        } if shodan_data else None,
     }
 
+    await send_slack_alert(alert, result, enriched)
+    return response
 
 if __name__ == "__main__":
     import uvicorn

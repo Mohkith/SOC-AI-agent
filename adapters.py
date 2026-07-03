@@ -2,29 +2,12 @@
 Adapters — one function per SIEM source. Each knows how to dig through
 that source's specific (and sometimes deeply nested) raw JSON shape and
 produce a clean, normalized Alert object.
-
-This is the ONLY place that should know about Splunk's or Sentinel's
-raw field names. Everything downstream only ever talks to Alert.
 """
 
 from schemas import Alert
 
 
 def from_splunk(raw: dict) -> Alert:
-    """
-    Converts a raw Splunk webhook payload into an Alert.
-
-    Real Splunk webhook shape:
-        raw["body"]["search_name"]   -> rule_name
-        raw["body"]["sid"]           -> alert_id
-        raw["body"]["result"]        -> dict of event fields (varies a lot
-                                         by alert type — brute force alerts
-                                         have src_ip/count, endpoint alerts
-                                         have ComputerName/EventCode, etc.)
-
-    Uses .get() everywhere except the one field we genuinely require
-    (rule_name) so a missing optional field never crashes the adapter.
-    """
     body = raw[0].get("body", {})
     result = body.get("result", {})
 
@@ -65,6 +48,7 @@ def from_splunk(raw: dict) -> Alert:
         description=body.get("search_name"),
         log_snippet=result.get("_raw"),
         message= result.get("Message"),
+        results_link=body.get("results_link"),
         raw_details=result,  # keep everything, untouched, for the LLM
     )
 
