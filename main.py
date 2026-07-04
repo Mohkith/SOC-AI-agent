@@ -6,7 +6,7 @@ Run with: uvicorn main:app --reload --port 5000
 Test with:
   curl -X POST http://localhost:5000/webhook/splunk \
     -H "Content-Type: application/json" \
-    -d @tests/sample_splunk_payload.json
+    -d "Splunk_alert.json"
 """
 
 from contextlib import asynccontextmanager
