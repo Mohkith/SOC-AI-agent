@@ -48,7 +48,6 @@ copy .env.example .env
 ## Environment Variables
 - `ABUSEIP_API_KEY` - AbuseIPDB API key
 - `VT_API_KEY` - VirusTotal API key
-- `ANTHROPIC_API_KEY` - Anthropic API key
 - `OLLAMA_API_KEY` - Ollama API key
 - `SLACK_WEBHOOK_URL` - Slack incoming webhook URL for triage notifications
 
@@ -78,6 +77,7 @@ curl -X POST http://localhost:5000/webhook/splunk \
 - `prompts.py` - Prompt construction helpers
 - `decisions.py` - Routing decisions for the graph
 - `ip_utils.py` - IP parsing and helper utilities
+- `slack.py` - Slack Integration
 
 
 
