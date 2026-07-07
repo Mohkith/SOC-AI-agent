@@ -7,9 +7,27 @@ produce a clean, normalized Alert object.
 from schemas import Alert
 
 
+def _normalize_severity(value: object) -> str:
+    severity = str(value).strip().lower() if value is not None else ""
+
+    aliases = {
+        "info": "low",
+        "informational": "low",
+        "information": "low",
+        "notice": "low",
+        "moderate": "medium",
+        "medium-high": "medium",
+        "med": "medium",
+        "severe": "critical",
+        "critical-high": "critical",
+        "urgent": "critical",
+    }
+
+    return severity if severity in {"low", "medium", "high", "critical"} else aliases.get(severity, "medium")
+
 def from_splunk(raw: dict) -> Alert:
-    body = raw[0].get("body", {})
-    result = body.get("result", {})
+    
+    result = raw.get("result", {})
 
     src_ip = (
         result.get("Source_Network_Address")
@@ -21,12 +39,6 @@ def from_splunk(raw: dict) -> Alert:
     if src_ip == "":
         src_ip = None
 
-    event_count = result.get("count")
-    try:
-        event_count = int(event_count) if event_count not in (None, "") else None
-    except (ValueError, TypeError):
-        event_count = None
-
     dest_port = result.get("dest_port") or result.get("Destination_Port")
     try:
         dest_port = int(dest_port) if dest_port not in (None, "") else None
@@ -34,21 +46,25 @@ def from_splunk(raw: dict) -> Alert:
         dest_port = None
 
     return Alert(
-        alert_id=body.get("sid", "unknown-splunk-alert"),
-        rule_name=body.get("search_name", "Unknown Splunk Rule"),
+        alert_id=raw.get("sid", "unknown-splunk-alert"),
+        rule_name=raw.get("search_name", "Unknown Splunk Rule"),
         siem_source="splunk",
-        severity="medium",  # raw Splunk webhook action doesn't send severity by default
+        severity=_normalize_severity(
+            raw.get("severity")
+            or result.get("severity")
+            or raw.get("alert_severity")
+            or result.get("alert_severity")
+        ),
         src_ip=src_ip,
         dest_ip=result.get("dest_ip") or result.get("Destination_Address"),
         dest_port=dest_port,
         username=result.get("Account_Name") or result.get("user"),
         hostname=result.get("ComputerName"),
         event_code=result.get("EventCode"),
-        event_count=event_count,
-        description=body.get("search_name"),
+        description=raw.get("search_name"),
         log_snippet=result.get("_raw"),
         message= result.get("Message"),
-        results_link=body.get("results_link"),
+        results_link=raw.get("results_link"),
         raw_details=result,  # keep everything, untouched, for the LLM
     )
 
