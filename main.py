@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import ValidationError
 from dotenv import load_dotenv
+import json
 
 from adapters import from_sentinel, from_splunk
 from db import create_db_and_tables
@@ -40,8 +41,11 @@ async def receive_splunk_alert(request: Request):
     try:
         alert = from_splunk(raw_payload)
     except (KeyError, ValidationError) as exc:
+        print(f"[Splunk] payload validation failed: {exc}")
+        if isinstance(exc, ValidationError):
+            print(f"[Splunk] validation details: {exc.errors()}")
         raise HTTPException(status_code=400, detail=f"Invalid Splunk payload: {exc}")
-
+    
     return await process_alert(alert)
 
 
@@ -52,6 +56,9 @@ async def receive_sentinel_alert(request: Request):
     try:
         alert = from_sentinel(raw_payload)
     except (KeyError, ValidationError) as exc:
+        print(f"[Sentinel] payload validation failed: {exc}")
+        if isinstance(exc, ValidationError):
+            print(f"[Sentinel] validation details: {exc.errors()}")
         raise HTTPException(status_code=400, detail=f"Invalid Sentinel payload: {exc}")
 
     return await process_alert(alert)
