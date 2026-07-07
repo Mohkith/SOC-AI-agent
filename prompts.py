@@ -20,7 +20,8 @@ matching this exact schema, with no other text:
   "Virsutotal_Enrichemnt": "<include the VT reports, if no enrichment, return 'none'>",
   "confidence": <int 0-100>,
   "priority": <int 0-100>,
-    "summary": "<2-3 sentence analyst brief; include MITRE ATT&CK IDs and technique names inline when relevant>",
+  "summary": "<2-3 sentence analyst brief; include MITRE ATT&CK IDs and technique names inline when relevant>",
+  "next_steps": ["<short analyst action 1>", "<short analyst action 2>", "<short analyst action 3>"],
   "mitre_tactics": ["T1110", "T1078"],
   "investigation_queries": ["<SPL or KQL query string>", "..."],
   "rule_suggestion": "<only if verdict is FALSE_POSITIVE, else  print null>"
@@ -30,6 +31,13 @@ Summary formatting rules:
 - When a MITRE ATT&CK technique is relevant, mention it inline in the summary using the format `Txxxx - Technique Name`.
 - Keep the summary to 2-3 sentences, but make sure the ATT&CK technique IDs and names are readable to an analyst.
 - If multiple techniques are relevant, include the most important ones rather than listing every possible technique.
+
+Next steps rules:
+- Return 2 to 5 concise, practical actions the analyst should take next.
+- Phrase each item as a concrete action, such as validate the host/user, check recent logon or process activity, compare with admin change windows, or confirm whether the activity matches expected behavior.
+- The steps should help the analyst decide whether this is a true positive or a false positive.
+- Keep the items specific to the alert context; do not use generic advice.
+- Do not repeat the summary or investigation queries verbatim.
 
 Rules for investigation_queries:
 - Only generate concise, analyst-useful queries; prefer 1 to 3 queries total.
