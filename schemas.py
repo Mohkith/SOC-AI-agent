@@ -17,7 +17,7 @@ class Alert(BaseModel):
     rule_name: str
 
     siem_source: Literal["splunk", "sentinel"] = "splunk"
-    severity: Literal["low", "medium", "high", "critical"] = "medium"
+    severity: Literal["low", "medium", "high", "critical"] = "Not Specified"
 
     # structured fields — code branches on these (internal IP check, etc.)
     src_ip: str | None = None
@@ -81,6 +81,7 @@ class TriageResult(BaseModel):
     confidence: int
     priority: int
     summary: str
+    next_steps: list[str] = []
     mitre_tactics: list[str] = []
     investigation_queries: list[str] = []
     rule_suggestion: str | None = None
