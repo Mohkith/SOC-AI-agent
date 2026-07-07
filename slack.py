@@ -48,7 +48,21 @@ def _build_slack_blocks(alert: Alert, result: TriageResult, enriched: EnrichedIO
     if enriched:
         fields.append({
             "type": "mrkdwn",
-            "text": f"*Threat Intel*\nAbuse: {enriched.abuse_score} · VT malicious: {enriched.vt_malicious}",
+            "text": (
+                "*AbuseIPDB*\n"
+                f"Score: {enriched.abuse_score} · Reports: {enriched.abuse_total_reports}"
+                + (f" · Country: {enriched.country}" if enriched.country else "")
+                + (f" · ISP: {enriched.isp}" if enriched.isp else "")
+            ),
+        })
+        fields.append({
+            "type": "mrkdwn",
+            "text": (
+                "*VirusTotal*\n"
+                f"Reputation: {enriched.vt_reputation} · Malicious: {enriched.vt_malicious} · "
+                f"Suspicious: {enriched.vt_suspicious} · Harmless: {enriched.vt_harmless}"
+                + (f" · Network: {enriched.vt_network}" if enriched.vt_network else "")
+            ),
         })
  
     blocks = [
@@ -61,7 +75,14 @@ def _build_slack_blocks(alert: Alert, result: TriageResult, enriched: EnrichedIO
             "type": "section",
             "text": {"type": "mrkdwn", "text": f"*Analyst brief*\n{result.summary}"},
         },
-    ]
+    ] # This is a list of blocks that will be sent to Slack, formatted according to Slack's Block Kit.
+
+    if result.next_steps:
+        next_steps_text = "\n".join(f"• {step}" for step in result.next_steps)
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*Next steps*\n{next_steps_text}"},
+        })
  
     if result.mitre_tactics:
         tactics = ", ".join(f"`{t}`" for t in result.mitre_tactics)
