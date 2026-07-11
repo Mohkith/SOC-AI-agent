@@ -14,7 +14,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import ValidationError
 from dotenv import load_dotenv
-import json
 
 from adapters import from_sentinel, from_splunk
 from db import create_db_and_tables
@@ -68,7 +67,7 @@ async def process_alert(alert: Alert) -> dict:
     final_state = await soc_graph.ainvoke({"alert": alert})
     result = final_state["result"]
     enriched = final_state.get("enriched")
-    shodan_data = final_state.get("shodan_data")
+    shodan_data = final_state.get("shodan_data")    
 
     response = {
         "alert_id": alert.alert_id,
@@ -85,8 +84,22 @@ async def process_alert(alert: Alert) -> dict:
             "vt_harmless": enriched.vt_harmless,
             "combined_score": enriched.combined_score,
             "severity": enriched.severity,
+            "domain": enriched.domain_enriched,
+            "vt_domain_malicious": enriched.vt_domain_malicious,
+            "vt_domain_suspicious": enriched.vt_domain_suspicious,
+            "vt_domain_harmless": enriched.vt_domain_harmless,
+            "hash": enriched.hash_enriched,
+            "vt_hash_malicious": enriched.vt_hash_malicious,
+            "vt_hash_suspicious": enriched.vt_hash_suspicious,
+            "vt_hash_harmless": enriched.vt_hash_harmless,
+            "url": enriched.url_enriched,
+            "vt_url_malicious": enriched.vt_url_malicious,
+            "vt_url_suspicious": enriched.vt_url_suspicious,
+            "vt_url_harmless": enriched.vt_url_harmless,
         } if enriched else None,
         "shodan_data": {
+            "isp": shodan_data.isp,
+            "asn": shodan_data.asn,
             "ports": shodan_data.ports,
             "hostnames": shodan_data.hostnames,
             "org": shodan_data.org,
