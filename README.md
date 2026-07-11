@@ -128,6 +128,6 @@ flowchart TD
 | `llm_client.py` | LLM triage request and JSON parsing with retry |
 | `db.py` | SQLite cache and enrichment entry point |
 | `prompts.py` | System prompt and prompt construction |
-| `decisions.py` | Routing decisions (Shodan threshold logic) |
-| `ip_utils.py` | IOC extraction and RFC1918 detection |
+| `decisions.py` | Routing decisions (Shodan threshold logic) and internal ip check |
+| `ioc_extract.py` | IOC extraction |
 | `slack.py` | Slack Block Kit message formatting |
