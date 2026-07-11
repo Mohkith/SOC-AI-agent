@@ -30,6 +30,10 @@ class Alert(BaseModel):
     timeframe_minutes: int | None = None
     description: str | None = None
     log_snippet: str | None = None
+    Url: str | None = None
+    FileHash: str | None = None
+    FileName: str | None = None
+    Domain: str | None = None
 
     # escape hatch — every other field Splunk/Sentinel sent, untouched.
     # the LLM sees this in full even though our code doesn't parse it.
@@ -45,6 +49,10 @@ class ExtractedIOCs(BaseModel):
     ips: list[str] = Field(default_factory=list)
     hostnames: list[str] = Field(default_factory=list)
     usernames: list[str] = Field(default_factory=list)
+    file_name: list[str] = Field(default_factory=list)
+    file_hash: list[str] = Field(default_factory=list)
+    domain: list[str] = Field(default_factory=list)
+    url: list[str] = Field(default_factory=list)
     has_network_ioc: bool = False
 
 
@@ -65,9 +73,23 @@ class VTresponse(BaseModel):
     last_analysis_results: dict | None = None
 
 
+class USresponse(BaseModel):
+    verdicts: dict | None = None
+    stats: dict | None = None
+    url: str | None = None
+    domain: str | None = None
+
+
+class URLEnrichment(BaseModel):
+    url: str
+    vt: VTresponse | None = None
+    urlscan: USresponse | None = None
+
 class ShodanResponse(BaseModel):
     
     ip_str: str
+    isp: str | None = None
+    asn: str | None = None
     ports: list[int] = []
     hostnames: list[str] = []
     org: str | None = None
@@ -86,7 +108,6 @@ class TriageResult(BaseModel):
     investigation_queries: list[str] = []
     rule_suggestion: str | None = None
 
-
 class EnrichedIOC(SQLModel, table=True):
 
     __tablename__ = "iocs_cached"
@@ -104,6 +125,21 @@ class EnrichedIOC(SQLModel, table=True):
     vt_suspicious: int = 0
     vt_harmless: int = 0
     vt_network: str | None = None
+
+    domain_enriched: str | None = None
+    vt_domain_malicious: int = 0
+    vt_domain_suspicious: int = 0
+    vt_domain_harmless: int = 0
+
+    hash_enriched: str | None = None
+    vt_hash_malicious: int = 0
+    vt_hash_suspicious: int = 0
+    vt_hash_harmless: int = 0
+
+    url_enriched: str | None = None
+    vt_url_malicious: int = 0
+    vt_url_suspicious: int = 0
+    vt_url_harmless: int = 0
 
     enriched_at: datetime = SQLField(
         default_factory=lambda: datetime.now(timezone.utc)
