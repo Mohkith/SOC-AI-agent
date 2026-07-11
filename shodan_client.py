@@ -45,6 +45,8 @@ async def enrich_shodan(ip_address: str) -> ShodanResponse | None:
     try:
         return ShodanResponse(
             ip_str=raw.get("ip_str", ip_address),
+            isp=raw.get("isp"),
+            asn=raw.get("asn"),
             ports=raw.get("ports", []),
             hostnames=raw.get("hostnames", []),
             org=raw.get("org"),
