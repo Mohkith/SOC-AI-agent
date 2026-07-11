@@ -6,24 +6,22 @@ produce a clean, normalized Alert object.
 
 from schemas import Alert
 
-
-def _normalize_severity(value: object) -> str:
+def normalize_severity(value: object) -> str:
     severity = str(value).strip().lower() if value is not None else ""
 
-    aliases = {
-        "info": "low",
-        "informational": "low",
-        "information": "low",
-        "notice": "low",
-        "moderate": "medium",
-        "medium-high": "medium",
-        "med": "medium",
-        "severe": "critical",
-        "critical-high": "critical",
-        "urgent": "critical",
-    }
+    if severity in {"low", "medium", "high", "critical"}:
+        return severity
 
-    return severity if severity in {"low", "medium", "high", "critical"} else aliases.get(severity, "medium")
+    if severity in {"info", "informational", "information", "notice"}:
+        return "low"
+
+    if severity in {"moderate", "medium-high", "med"}:
+        return "medium"
+
+    if severity in {"severe", "critical-high", "urgent"}:
+        return "critical"
+
+    return "medium"
 
 def from_splunk(raw: dict) -> Alert:
     
@@ -44,12 +42,43 @@ def from_splunk(raw: dict) -> Alert:
         dest_port = int(dest_port) if dest_port not in (None, "") else None
     except (ValueError, TypeError):
         dest_port = None
+    
+    file_hash = (
+        result.get("file_hash") or
+        result.get("md5") or
+        result.get("sha256") or
+        result.get("hash") or
+        result.get("process_hash") or
+        None
+    )
+
+    file_name = (
+        result.get("file_name") or
+        result.get("filename") or
+        result.get("TargetFileName") or
+        result.get("file_path") or
+        None
+    )
+
+    domain = (
+        result.get("url_domain") or
+        result.get("domain") or 
+        result.get("query") or 
+        result.get("dns") or 
+        None
+    )
+
+    url = (
+        result.get("url") or
+        result.get("uri") or
+        None
+    )
 
     return Alert(
         alert_id=raw.get("sid", "unknown-splunk-alert"),
         rule_name=raw.get("search_name", "Unknown Splunk Rule"),
         siem_source="splunk",
-        severity=_normalize_severity(
+        severity=normalize_severity(
             raw.get("severity")
             or result.get("severity")
             or raw.get("alert_severity")
@@ -62,8 +91,11 @@ def from_splunk(raw: dict) -> Alert:
         hostname=result.get("ComputerName"),
         event_code=result.get("EventCode"),
         description=raw.get("search_name"),
+        FileHash=file_hash,
+        FileName=file_name,
+        Domain=domain,
+        Url=url,
         log_snippet=result.get("_raw"),
-        message= result.get("Message"),
         results_link=raw.get("results_link"),
         raw_details=result,  # keep everything, untouched, for the LLM
     )
@@ -98,6 +130,5 @@ def from_sentinel(raw: dict) -> Alert:
         username=username,
         hostname=hostname,
         description=raw.get("description"),
-        message=raw.get("message"),
         raw_details=raw,  # keep everything, untouched, for the LLM
     )
