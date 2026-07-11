@@ -23,7 +23,7 @@ matching this exact schema, with no other text:
   "summary": "<2-3 sentence analyst brief; include MITRE ATT&CK IDs and technique names inline when relevant>",
   "next_steps": ["<short analyst action 1>", "<short analyst action 2>", "<short analyst action 3>"],
   "mitre_tactics": ["T1110", "T1078"],
-  "investigation_queries": ["<SPL or KQL query string>", "..."],
+  "investigation_queries": ["<SPL or KQL query string>"],
   "rule_suggestion": "<only if verdict is FALSE_POSITIVE, else  print null>"
 }
 
@@ -87,6 +87,18 @@ def build_prompt(
         parts.append(f"Combined severity: {enriched.severity} ({enriched.combined_score}/100)")
         parts.append(f"Country: {enriched.country or 'unknown'}")
         parts.append(f"ISP: {enriched.isp or 'unknown'}")
+
+        if enriched.domain_enriched:
+            parts.append(f"\nDOMAIN ENRICHMENT ({enriched.domain_enriched}):")
+            parts.append(f"VT malicious: {enriched.vt_domain_malicious}, suspicious: {enriched.vt_domain_suspicious}, harmless: {enriched.vt_domain_harmless}")
+
+        if enriched.hash_enriched:
+            parts.append(f"\nHASH ENRICHMENT ({enriched.hash_enriched}):")
+            parts.append(f"VT malicious: {enriched.vt_hash_malicious}, suspicious: {enriched.vt_hash_suspicious}, harmless: {enriched.vt_hash_harmless}")
+
+        if enriched.url_enriched:
+            parts.append(f"\nURL ENRICHMENT ({enriched.url_enriched}):")
+            parts.append(f"VT malicious: {enriched.vt_url_malicious}, suspicious: {enriched.vt_url_suspicious}, harmless: {enriched.vt_url_harmless}")
     else:
         parts.append("\nTHREAT INTEL: source IP is internal, or no network IOC present — no external reputation data")
 
