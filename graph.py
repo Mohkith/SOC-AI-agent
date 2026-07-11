@@ -10,7 +10,7 @@ from langgraph.graph import END, StateGraph
 
 from decisions import should_query_shodan, is_internal_ip
 from db import enrich_ip_all
-from ip_utils import extract_iocs
+from ioc_extract import extract_iocs
 from llm_client import triage_alert
 from prompts import build_prompt
 from schemas import Alert, EnrichedIOC, ExtractedIOCs, ShodanResponse, TriageResult
