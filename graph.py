@@ -8,9 +8,9 @@ from typing import TypedDict
 
 from langgraph.graph import END, StateGraph
 
-from decisions import should_query_shodan
+from decisions import should_query_shodan, is_internal_ip
 from db import enrich_ip_all
-from ip_utils import extract_iocs, is_internal_ip
+from ip_utils import extract_iocs
 from llm_client import triage_alert
 from prompts import build_prompt
 from schemas import Alert, EnrichedIOC, ExtractedIOCs, ShodanResponse, TriageResult
@@ -35,15 +35,22 @@ def extract_iocs_node(state: GraphState) -> dict:
 
 async def enrich_node(state: GraphState) -> dict:
     iocs = state["iocs"]
-    if not iocs.has_network_ioc:
+    has_any_ioc = (
+        iocs.ips
+        or iocs.domain
+        or iocs.file_hash
+        or iocs.url
+    )
+    
+    if not has_any_ioc:
         return {"enriched": None}
 
-    target_ip = iocs.ips[0]
-    if is_internal_ip(target_ip):
-        print(f"  [skip] {target_ip} is internal — no external enrichment")
-        return {"enriched": None}
+    if iocs.ips and is_internal_ip(iocs.ips[0]):
+        print(f"  [skip] {iocs.ips[0]} is internal — skipping IP enrichment")
+        if not iocs.domain and not iocs.file_hash and not iocs.url:
+            return {"enriched": None}
 
-    enriched = await enrich_ip_all(target_ip)
+    enriched = await enrich_ip_all(iocs)
     return {"enriched": enriched}
 
 
